@@ -76,8 +76,8 @@ module Zendesk
         curl.http_delete
       end
 
-      if curl.body_str == "<error>Couldn't authenticate you</error>"
-        return "string" #raise CouldNotAuthenticateYou 
+      if curl.body_str.strip == "<error>Couldn't authenticate you</error>"
+        raise "authentication error"
       end
       Response.new(curl, format)
     end
