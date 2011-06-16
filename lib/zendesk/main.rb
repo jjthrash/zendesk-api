@@ -1,6 +1,6 @@
 module Zendesk
   class Main
-    attr_accessor :main_url, :format
+    attr_accessor :main_url, :format, :on_behalf_of
     attr_reader :response_raw, :response
 
     def initialize(account, username, password, options = {})
@@ -53,14 +53,18 @@ module Zendesk
     def make_request(end_url, body = {})
       curl = Curl::Easy.new(main_url + end_url + ".#{@format}")
       curl.userpwd = "#{@username}:#{@password}"
+
+      curl.headers ||= {}
+      curl.headers['X-On-Behalf-Of'] = self.on_behalf_of if self.on_behalf_of.present?
+
       if body.empty? or body[:list]
         curl.url = curl.url + params_list(body[:list]) if body[:list]
         curl.perform
       elsif body[:post]
-        curl.headers = "Content-Type: application/xml"
+        curl.headers['Content-Type'] = "application/xml"
         curl.http_post 
       elsif body[:create]
-        curl.headers = "Content-Type: application/xml"
+        curl.headers['Content-Type'] = "application/xml"
         curl.http_post(string_body(body))
       elsif body[:update]
         # PUT seems badly broken, at least I can't get it to work without always
